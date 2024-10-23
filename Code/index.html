@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Register</title>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!--Navbar-->
+        <nav>
+            <ul>
+                <li onclick="window.open('index.html', '_self')">Register / Login</li>
+                <li onclick="window.open('game.html', '_self')">Game</li>
+                <li onclick="window.open('users.html', '_self')">Users Highest Score</li>
+            </ul>
+        </nav>
+
+        <!--fallback-->
+        <p id="fallback-index">You must be logged in to access the game.</p>
+
+        <!--register / login form-->
+        <form action="index.html" name="form" class="card" id="form" method="POST">
+            <!--Buttons in a row-->
+            <div class="buttons">
+                <input class="btn gap" onclick="loginForm()" type="button" title="Login" value="Login">
+                <input class="btn gap active" onclick="registerForm()" type="button" title="Register" value="Register">
+            </div>
+    
+            <!--register form-->
+            <div id="register">
+                <label for="register-name">Name <span>*</span></label>
+                <input id="register-name" name="register-name" class="detail" type="text" autocomplete="off" required />
+                <p id="register-name-error">Name field must be at least 4 characters long.</p>
+                <label for="register-email">Email <span>*</span></label>
+                <input id="register-email" name="register-email" class="detail" type="email" autocomplete="off" required />
+                <p id="register-email-error">Please fill in a valid email.</p>
+                <label for="register-phone">Phone <span>*</span></label>
+                <input id="register-phone" name="register-phone" class="detail" type="tel" autocomplete="off" required />
+                <p id="register-phone-error">Please fill in a valid phone number.</p>
+                <label for="register-address">Address</label>
+                <input id="register-address" name="register-address" class="detail" type="text" autocomplete="off" />
+                <label for="register-password">Password <span>*</span></label>
+                <input id="register-password" name="register-password" class="detail" type="password" autocomplete="off" required
+                title="Must contain a digit, an uppercase letter, a lowercase letter with no space and 8-16 long" placeholder="A digit, an uppercase letter, a lowercase letter with no space and 8-16 long" />
+                <p id="register-password-error">Password is invalid. Must contain a digit, an uppercase letter, a lowercase letter with no space and 8-16 long.</p>
+                <button class="btn" type="submit" onclick="validated()">Register</button>
+                <p id="register-error"></p>
+            </div>
+    
+            <!--login form-->
+            <div id="login">
+                <label for="login-email">Email <span>*</span></label>
+                <input id="login-email" name="login-email" class="detail" type="email" autocomplete="off" required />
+                <p id="login-email-error">Please fill in a valid email.</p>
+                <label for="login-password">Password <span>*</span></label>
+                <input id="login-password" name="login-password" class="detail" type="password" autocomplete="off" required
+                title="Must contain a digit, an uppercase letter, a lowercase letter with no space and 8-16 long" placeholder="A digit, an uppercase letter, a lowercase letter with no space and 8-16 long" />
+                <p id="login-password-error">Password is invalid. Must contain a digit, an uppercase letter, a lowercase letter with no space and 8-16 long.</p>
+                <button class="btn" type="submit" onclick="validated()">Login</button>
+                <p id="login-error"></p>
+            </div>
+        </form>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

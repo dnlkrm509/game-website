@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Page</title>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!--modals-->
+        <!--choose oponent modal-->
+        <div id="choose-oponent" class="modal-container">
+            <div class="backdrop"></div>
+            <div class="modal">
+                <!--modal title-->
+                <h3>Choose your oponent</h3>
+                
+                <!--Buttons in a row-->
+                <div class="buttons">
+                    <button class="btn gap" onclick="single()">Single player</button>
+                    <span>OR</span>
+                    <button class="btn gap" onclick="computer()">Against Computer</button>
+                </div>
+            </div>
+        </div>
+
+        <!--gameover modal-->
+        <div id="gameover" class="modal-container">
+            <div class="backdrop"></div>
+            <div class="modal">
+                
+                <!--modal title-->
+                <h3 style="margin:0;"><span><b>Game Over</b></span></h3>
+                
+                <!--modal message-->
+                <p>Do you wish to play again?</p>
+                
+                <!--Buttons in a row-->
+                <div class="buttons">
+                    <button class="btn gap" onclick="replay()">Yes</button>
+                    <button class="btn gap" onclick="closeGameFeedbackModal()">No</button>
+                </div>
+            </div>
+        </div>
+
+        <!--Navbar-->
+        <nav>
+            <ul>
+                <li onclick="window.open('index.html', '_self')">Register / Login</li>
+                <li onclick="window.open('game.html', '_self')">Game</li>
+                <li onclick="window.open('users.html', '_self')">Users Highest Score</li>
+            </ul>
+        </nav>
+
+        <!--fallback-->
+        <p id="fallback-game">You must be logged out to access the register / login page.</p>
+
+        <!--user's name and state-->
+        <div class="user-name-state">
+            <p class="username gap"></p>
+            <button class="btn gap user-state" onclick="logout()">Logout</button>
+            <p>Car images <a href="http://www.freepik.com">Designed by brgfx / Freepik</a></p>
+        </div>
+
+        <!--user email, score and computer score if they choose to play against the computer-->
+        <div id="detail-container">
+            <span id="email-span"><b>Email: </b></span>
+            <span id="score-span"><b>Score: </b></span>
+            <span id="coin">Coin: </span>
+            <span id="oponent">Computer Score: </span>
+        </div>
+        <canvas class="card game" id="game" width="600" height="430"></canvas>
+    </div>
+
+    <script type="module">
+        "use strict";
+
+
+        import { Object } from './js/module/Object.js';
+        import { Car } from "./js/module/Car.js";
+        import { data } from "./js/module/Macro.js";
+        import { Chicken } from "./js/module/Chicken.js";
+        import { Coin } from "./js/module/Coin.js";
+
+
+        let {
+            isLoggedin,
+            users,
+            loggedinUser,
+            oponentModal,
+            gameFeedbackModal,
+            fallbackGame,
+            userName,
+            coinSpan,
+            oponentSpan,
+            gameOver,
+            closeOponentModal
+        } = data;
+
+        if(isLoggedin == "false") {
+            fallbackGame.style.display = "none";
+            window.open("index.html", "_self");
+        } else {
+            fallbackGame.style.display = "block";
+        }
+
+        let carStartXPosition = 600;
+
+        const car1YPosition = 0;
+        const car2YPosition = 100;
+        const car3YPosition = 200;
+        const car4YPosition = 300;
+        
+        let isInitial = true;
+        let carSpeed = 15;
+        let chickenSpeed = 15;
+        let gameOn;
+
+        let context;
+        let car1, car2, car3, car4;
+        let chicken;
+        let road;
+        let coin1, coin2, coin3, coin4, coin5;
+        let coin1Collected = false;
+        let coin2Collected = false;
+        let coin3Collected = false;
+        let coin4Collected = false;
+        let coin5Collected = false;
+
+        let imgPath = "../images/chicken.png";
+
+        window.gameOver = gameOver;
+        window.oponentModal = oponentModal;
+        window.coinSpan = coinSpan;
+        window.oponentSpan = oponentSpan;
+        window.closeOponentModal = closeOponentModal;
+
+        function single() {
+            closeOponentModal();
+            gameOver = false;
+            car1.reset();
+            car2.reset();
+            car3.reset();
+            car4.reset();
+            chicken.reset();
+
+            gameOn = setInterval(play, 100);
+        }
+
+        function computer() {
+            let computerScore = Math.floor(Math.random() * 17) + 1;
+            while(computerScore < 5) {
+                computerScore = Math.floor(Math.random() * 17) + 1;
+            }
+            oponentSpan.innerHTML = "Conputer Score: " + computerScore;
+            oponentSpan.style.display = "block";
+            closeOponentModal();
+            gameOver = false;
+            car1.reset();
+            car2.reset();
+            car3.reset();
+            car4.reset();
+            chicken.reset();
+
+            gameOn = setInterval(play, 100);
+        }
+        window.single = single;
+
+
+        window.computer = computer;
+
+        function updateScore(val) {
+            let newScore = val;
+            let coin = JSON.parse(localStorage.getItem("loggedinUser")).coin;
+            let updatableUser = {...loggedinUser, score: newScore, coin};
+            if(newScore > loggedinUser.highestScore) {
+                updatableUser = {...loggedinUser, score: newScore, highestScore: newScore, coin};
+            }
+
+
+            let userIndex = users.findIndex((user) => user.email == loggedinUser.email);
+            let updatedUsers = [...users];
+            updatedUsers[userIndex] = updatableUser;
+            
+            localStorage.setItem("users", JSON.stringify(updatedUsers));
+            localStorage.setItem("loggedinUser", JSON.stringify(updatableUser));
+            scoreSpan.innerHTML = "Score: " + JSON.parse(localStorage.getItem("loggedinUser")).score;
+        }
+
+        function updateCoin(val) {
+            let newVal = val;
+            let score = JSON.parse(localStorage.getItem("loggedinUser")).score;
+            let highestScore = JSON.parse(localStorage.getItem("loggedinUser")).highestScore;
+            let updatableUser = {...loggedinUser, coin: newVal, highestScore, score};
+
+
+            let userIndex = users.findIndex((user) => user.email == loggedinUser.email);
+            let updatedUsers = [...users];
+            updatedUsers[userIndex] = updatableUser;
+            
+            localStorage.setItem("users", JSON.stringify(updatedUsers));
+            localStorage.setItem("loggedinUser", JSON.stringify(updatableUser));
+            coinSpan.innerHTML = "Coin: " + JSON.parse(localStorage.getItem("loggedinUser")).coin;
+        }
+
+        window.onload = function() {
+            let canvas = document.getElementById("game");
+            context = canvas.getContext("2d");
+
+
+            userName[0].innerHTML = "Welcome " + loggedinUser.name;
+            openOponentModal();
+            // set up cars
+            car1 = new Car("../images/car1.png", context, carSpeed, carStartXPosition, car1YPosition);
+            car2 = new Car("../images/car2.png", context, carSpeed, carStartXPosition, car2YPosition);
+            car3 = new Car("../images/car3.png", context, carSpeed, carStartXPosition, car3YPosition);
+            car4 = new Car("../images/car4.png", context, carSpeed, carStartXPosition, car4YPosition);
+
+            car1.start();
+            car2.start();
+            car3.start();
+            car4.start();
+
+            chicken = new Chicken(imgPath, context, gameOver, 300, 390);
+
+            road = new Object("../images/road.jpg", context, 0, -100);
+
+            let coin1X = Math.floor(Math.random() * 560) + 21;
+            let coin1Y = Math.floor(Math.random() * 280) + 11;
+            coin1 = new Coin("../images/coin.png", context, coin1X, coin1Y);
+
+            let coin2X = Math.floor(Math.random() * 560) + 21;
+            let coin2Y = Math.floor(Math.random() * 280) + 11;
+            coin2 = new Coin("../images/coin.png", context, coin2X, coin2Y);
+
+            let coin3X = Math.floor(Math.random() * 560) + 21;
+            let coin3Y = Math.floor(Math.random() * 280) + 11;
+            coin3 = new Coin("../images/coin.png", context, coin3X, coin3Y);
+
+            let coin4X = Math.floor(Math.random() * 560) + 21;
+            let coin4Y = Math.floor(Math.random() * 280) + 11;
+            coin4 = new Coin("../images/coin.png", context, coin4X, coin4Y);
+
+            let coin5X = Math.floor(Math.random() * 560) + 21;
+            let coin5Y = Math.floor(Math.random() * 280) + 11;
+            coin5 = new Coin("../images/coin.png", context, coin5X, coin5Y);
+        }
+
+        function logout() {
+            // set local storage isLoggedin variable to false if it is true
+            // and loggedin user details to an empty string
+            
+            localStorage.setItem("isLoggedin", "false");
+            localStorage.setItem("loggedinUser", "{}");
+            window.open("index.html", "_self");
+        }
+
+        window.logout = logout;
+
+        function openOponentModal() {
+            updateScore(0);
+            oponentModal.style.display = "block";
+        }
+
+        function openGameFeedbackModal() {
+            gameFeedbackModal.style.display = "block";
+        }
+
+        window.openGameFeedbackModal = openGameFeedbackModal;
+
+        function closeGameFeedbackModal() {
+            gameFeedbackModal.style.display = "none";
+        }
+
+        window.closeGameFeedbackModal = closeGameFeedbackModal;
+        
+        const emailSpan = document.getElementById("email-span");
+        const scoreSpan = document.getElementById("score-span");
+        
+        if(loggedinUser.email != undefined) {
+            emailSpan.innerHTML = "Email: " + loggedinUser.email;
+            scoreSpan.innerHTML = "Score: " + loggedinUser.score;
+            coinSpan.innerHTML = "Coin: " + loggedinUser.coin;
+        }
+
+        function replay() {
+            closeGameFeedbackModal();
+            openOponentModal();
+        }
+
+        window.replay = replay;
+
+        document.addEventListener("keydown", startChicken);
+
+        function startChicken(event) {
+            /* both score and number of coins obtained must be incremented in keydown event.
+             Otherwise you won't get an acurate result and the outcome would not be what is expected.
+             The reason is play method runs every 100miliseconds and it misses some occurrences so the update will not be
+             invoked every time player scores or collects coin.
+             */
+            // check if chicken collected the coin
+            if(coin1.collision(chicken)) {
+                coin1Collected = true;
+                coin1.update(700, 500);
+                updateCoin(JSON.parse(localStorage.getItem("loggedinUser")).coin + 1);
+            }
+
+            if(coin2.collision(chicken)) {
+                coin2Collected = true;
+                coin2.update(700, 500);
+                updateCoin(JSON.parse(localStorage.getItem("loggedinUser")).coin + 1);
+            }
+
+            if(coin3.collision(chicken)) {
+                coin3Collected = true;
+                coin3.update(700, 500);
+                updateCoin(JSON.parse(localStorage.getItem("loggedinUser")).coin + 1);
+            }
+
+            if(coin4.collision(chicken)) {
+                coin4Collected = true;
+                coin4.update(700, 500);
+                updateCoin(JSON.parse(localStorage.getItem("loggedinUser")).coin + 1);
+            }
+
+            if(coin5.collision(chicken)) {
+                coin5Collected = true;
+                coin5.update(700, 500);
+                updateCoin(JSON.parse(localStorage.getItem("loggedinUser")).coin + 1);
+            }
+            
+
+            if(!gameOver) {
+                if(isInitial) {
+                    imgPath = "../images/chickenR.png";
+                    isInitial = false;
+                }
+
+                if(imgPath == "../images/chickenL.png") {
+                    imgPath = "../images/chickenR.png";
+                } else if(imgPath == "../images/chickenR.png") {
+                    imgPath = "../images/chickenL.png";
+                }
+
+                chicken.updatePic(imgPath);
+                chicken.setEvent(event);
+                let score = chicken.draw();
+
+                if(score) {
+                    car1.updateSpeed(gameOver);
+                    car2.updateSpeed(gameOver);
+                    car3.updateSpeed(gameOver);
+                    car4.updateSpeed(gameOver);
+
+                    updateScore(JSON.parse(localStorage.getItem("loggedinUser")).score + 1);
+
+                    coin1Collected = false;
+                    coin2Collected = false;
+                    coin3Collected = false;
+                    coin4Collected = false;
+                    coin5Collected = false;
+
+                    let coin1X = Math.floor(Math.random() * 560) + 21;
+                    let coin1Y = Math.floor(Math.random() * 280) + 11;
+                    
+                    coin1.update(coin1X, coin1Y);
+
+                    let coin2X = Math.floor(Math.random() * 560) + 21;
+                    let coin2Y = Math.floor(Math.random() * 280) + 11;
+
+                    coin2.update(coin2X, coin2Y);
+
+                    let coin3X = Math.floor(Math.random() * 560) + 21;
+                    let coin3Y = Math.floor(Math.random() * 280) + 11;
+                
+                    coin3.update(coin3X, coin3Y);
+                    
+                    let coin4X = Math.floor(Math.random() * 560) + 21;
+                    let coin4Y = Math.floor(Math.random() * 280) + 11;
+                
+                    coin4.update(coin4X, coin4Y);
+
+                    let coin5X = Math.floor(Math.random() * 560) + 21;
+                    let coin5Y = Math.floor(Math.random() * 280) + 11;
+
+                    coin5.update(coin5X, coin5Y);
+                }
+            }
+
+        }
+
+        function clearCanvas() {
+            //Draw image of road
+
+            context.fill = "#555555";
+            context.fillRect(0, 330, 600, 100);
+            road.draw();
+        }
+
+        function play() {
+            // move cars
+            clearCanvas();
+            
+            car1.draw();
+            car2.draw();
+            car3.draw();
+            car4.draw();
+
+            chicken.draw();
+
+            // draw coin if it is not collected
+            if(!coin1Collected) {
+                coin1.draw();
+            }
+
+            if(!coin2Collected) {
+                coin2.draw();
+            }
+
+            if(!coin3Collected) {
+                coin3.draw();
+            }
+
+            if(!coin4Collected) {
+                coin4.draw();
+            }
+
+            if(!coin5Collected) {
+                coin5.draw();
+            }
+
+            // Check if any of cars hits the chicken
+            if (
+                car1.collision(chicken) || car2.collision(chicken) ||
+                car3.collision(chicken) || car4.collision(chicken)
+            ) {
+                gameOver = true;
+                oponentSpan.style.display = "none";
+                loggedinUser = JSON.parse(localStorage.getItem("loggedinUser"));
+                updateScore(0);
+                
+                car1.updateSpeed(gameOver);
+                car2.updateSpeed(gameOver);
+                car3.updateSpeed(gameOver);
+                car4.updateSpeed(gameOver);
+
+                chicken.reset();
+
+                openGameFeedbackModal();
+                
+                clearInterval(gameOn);
+            }
+        }
+    </script>
+</body>
+</html>

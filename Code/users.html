@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users Highest Level</title>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!--Navbar-->
+        <nav>
+            <ul>
+                <li onclick="window.open('index.html', '_self')">Register / Login</li>
+                <li onclick="window.open('game.html', '_self')">Game</li>
+                <li onclick="window.open('users.html', '_self')">Users Highest Score</li>
+            </ul>
+        </nav>
+        
+        <!--user's name and state-->
+        <div class="user-name-state">
+            <p class="username gap"></p>
+            <button class="btn gap user-state" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="card users">
+            <!--The message to inform the user they can go back to game with pressing the space key-->
+            <p class="note">You might want to return to game by pressing the space key.</p>
+
+            <!--Rranking table-->
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <th>Email Address</th>
+                    <th>Highest Score</th>
+                    <th>Coin</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
